@@ -4,15 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tony Pai 工程工具箱</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #2c3e50;
             --accent: #3498db;
             --bg: #f8f9fa;
+            /* 漂白水計算器用 */
+            --input-border: #27ae60;
+            --input-bg-readonly: #e8f5e9;
+            --result-bg: #fff9c4;
+            --result-fg: #f57c00;
+            --advice-bg: #e3f2fd;
+            --advice-fg: #1565c0;
+            --btn: #3498db;
+            --note-bg: #f5f5f5;
+            --danger: #c62828;
         }
-        body { font-family: sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+        * { box-sizing: border-box; }
+        body { font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
         .header { text-align: center; margin-bottom: 30px; }
-        
+
         /* 網格佈局 */
         .grid {
             display: grid;
@@ -25,7 +39,7 @@
         /* 方框樣式 */
         .tool-card {
             background: white;
-            aspect-ratio: 1 / 1; /* 正方形 */
+            aspect-ratio: 1 / 1;
             border-radius: 15px;
             display: flex;
             flex-direction: column;
@@ -42,20 +56,157 @@
         .icon { font-size: 40px; margin-bottom: 10px; }
         .title { font-weight: bold; font-size: 14px; text-align: center; padding: 0 10px; }
 
-        /* 隱藏的功能區塊 */
+        /* 消毒濃度計算 — 漂白水計算器完整版 */
         #calculator-page {
             display: none;
             max-width: 500px;
             margin: 20px auto;
-            background: white;
+            background: #f0f0f0;
             padding: 20px;
             border-radius: 15px;
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
-        .back-btn { background: #eee; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .calc-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .result { margin-top: 20px; padding: 15px; background: #e8f4fd; border-radius: 8px; border-left: 5px solid var(--accent); }
+        #calculator-page .back-btn {
+            background: #eee;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-family: inherit;
+        }
+        #calculator-page .calc-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0 0 20px;
+            text-align: center;
+            color: #2c3e50;
+        }
+        #calculator-page .panel {
+            border: 2px solid;
+            border-radius: 6px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
+        }
+        #calculator-page .panel-input {
+            border-color: var(--input-border);
+            background: #f0f0f0;
+        }
+        #calculator-page .panel-input .title {
+            color: var(--input-border);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        #calculator-page .row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px 8px;
+            margin-bottom: 8px;
+        }
+        #calculator-page .row:last-child { margin-bottom: 0; }
+        #calculator-page .label { min-width: 5.5em; font-size: 0.95rem; }
+        #calculator-page input[type="text"],
+        #calculator-page input[type="number"] {
+            font-family: inherit;
+            font-size: 1rem;
+            padding: 6px 8px;
+            border: 2px solid var(--input-border);
+            border-radius: 4px;
+            width: 5.5em;
+        }
+        #calculator-page input.readonly {
+            background: var(--input-bg-readonly);
+            border-color: #a5d6a7;
+        }
+        #calculator-page .unit { color: #7f8c8d; font-size: 0.9rem; }
+        #calculator-page .ppm-hint { color: #7f8c8d; font-size: 0.85rem; margin-left: 4px; }
+        #calculator-page .btn-calc {
+            display: block;
+            width: 100%;
+            max-width: 200px;
+            margin: 12px auto;
+            padding: 10px 24px;
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            background: var(--btn);
+            border: 2px solid #2980b9;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #calculator-page .btn-calc:hover { background: #2980b9; }
+        #calculator-page .panel-result {
+            border-color: var(--result-fg);
+            background: var(--result-bg);
+        }
+        #calculator-page .panel-result .title {
+            color: var(--result-fg);
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        #calculator-page .result-line {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px 4px;
+            margin-top: 4px;
+        }
+        #calculator-page .result-cc {
+            font-size: 1.15rem;
+            font-weight: 700;
+            padding: 6px 10px;
+            border: 2px solid #f5b041;
+            border-radius: 4px;
+            background: var(--result-bg);
+            width: 5em;
+            text-align: right;
+        }
+        #calculator-page .result-liter {
+            font-size: 1rem;
+            padding: 4px 8px;
+            border: 1px solid #f5b041;
+            border-radius: 4px;
+            background: var(--result-bg);
+            width: 4.5em;
+            text-align: right;
+        }
+        #calculator-page .panel-advice {
+            border-color: var(--advice-fg);
+            background: var(--advice-bg);
+        }
+        #calculator-page .panel-advice .title {
+            color: var(--advice-fg);
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+        #calculator-page .advice-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        #calculator-page .advice-row .label { min-width: 6.5em; font-size: 0.95rem; }
+        #calculator-page .advice-row .value {
+            padding: 4px 8px;
+            border: 1px solid #90caf9;
+            border-radius: 4px;
+            background: var(--advice-bg);
+            min-width: 8em;
+        }
+        #calculator-page .panel-note {
+            border: 1px solid #ccc;
+            background: var(--note-bg);
+            color: #555;
+            font-size: 0.9rem;
+        }
+        #calculator-page .panel-note .title { color: #555; font-weight: 700; margin-bottom: 6px; }
+        #calculator-page .panel-note p { margin: 0 0 6px; }
+        #calculator-page .panel-note .danger { color: var(--danger); }
+        #calculator-page .by-line { text-align: right; color: #7f8c8d; margin-top: 8px; }
     </style>
 </head>
 <body>
@@ -101,17 +252,67 @@
 
 <div id="calculator-page">
     <button class="back-btn" onclick="showHome()">← 返回工具箱</button>
-    <h2>🧪 消毒濃度計算</h2>
-    <hr>
-    <label>原始漂白水濃度 (%)：</label>
-    <input type="number" id="origin" value="6">
-    <label>目標稀釋濃度 (ppm)：</label>
-    <input type="number" id="target" value="500">
-    <label>欲配製水量 (L)：</label>
-    <input type="number" id="water" value="10">
-    <button class="calc-btn" onclick="runCalc()">開始計算</button>
+    <h2 class="calc-title">🧪 漂白水稀釋計算器</h2>
 
-    <div id="res-box" class="result" style="display:none;"></div>
+    <section class="panel panel-input">
+        <div class="title">輸入參數</div>
+        <div class="row">
+            <span class="label">漂白水濃度：</span>
+            <input type="text" id="bleach_pct" value="8" inputmode="decimal">
+            <span class="unit">%</span>
+            <span class="ppm-hint" id="ppm_hint">(80000 ppm)</span>
+        </div>
+        <div class="row">
+            <span class="label">目標濃度：</span>
+            <input type="text" id="target_ppm" value="50" inputmode="decimal">
+            <span class="unit">ppm</span>
+        </div>
+        <div class="row">
+            <span class="label">稀釋倍數：</span>
+            <input type="text" id="dilution" class="readonly" readonly>
+            <span class="ppm-hint">(自動計算)</span>
+        </div>
+        <div class="row">
+            <span class="label">Tank水量：</span>
+            <input type="text" id="tank_liter" value="60" inputmode="decimal">
+            <span class="unit">公升</span>
+        </div>
+        <button type="button" class="btn-calc" id="btn_calc">計算</button>
+    </section>
+
+    <section class="panel panel-result">
+        <div class="title">計算結果</div>
+        <div class="result-line">
+            <span class="label">要加入多少漂白水</span>
+            <input type="text" id="result_cc" class="result-cc" readonly>
+            <span class="unit">c.c/ml</span>
+            <input type="text" id="result_liter" class="result-liter" readonly>
+            <span class="unit">公升</span>
+        </div>
+    </section>
+
+    <section class="panel panel-advice">
+        <div class="title">操作建議（降低氯離子對超純水系統干擾）</div>
+        <div class="advice-row">
+            <span class="label">建議浸泡時間：</span>
+            <span class="value" id="soak_time">—</span>
+        </div>
+        <div class="advice-row">
+            <span class="label">建議沖洗次數：</span>
+            <span class="value" id="rinse_count">—</span>
+        </div>
+        <div class="advice-row">
+            <span class="label">殘留風險：</span>
+            <span class="value" id="residual_risk">—</span>
+        </div>
+    </section>
+
+    <section class="panel panel-note">
+        <div class="title">備註與安全提醒</div>
+        <p>物理偵測：若無餘氯測試紙，請比對進/出水之導電率是否一致。</p>
+        <p class="danger">安全提醒：禁止使用超過 40°C 之熱水配製，避免產生氯氣。</p>
+        <p class="by-line">By Tony.Pai</p>
+    </section>
 </div>
 
 <script>
@@ -127,17 +328,117 @@
         document.getElementById('calculator-page').style.display = 'none';
     }
 
-    // 漂白水計算邏輯
-    function runCalc() {
-        const o = document.getElementById('origin').value;
-        const t = document.getElementById('target').value;
-        const w = document.getElementById('water').value;
-        const ml = (t * w) / (o * 10);
-        
-        const box = document.getElementById('res-box');
-        box.style.display = 'block';
-        box.innerHTML = `需加入漂白水：<strong>${ml.toFixed(1)} ml</strong><br>加入清水至：<strong>${w} 公升</strong>`;
-    }
+    // 漂白水稀釋計算器（與 bleach_calculator.html 相同邏輯）
+    (function () {
+        var bleachPct = document.getElementById("bleach_pct");
+        var targetPpm = document.getElementById("target_ppm");
+        var tankLiter = document.getElementById("tank_liter");
+        var dilution = document.getElementById("dilution");
+        var ppmHint = document.getElementById("ppm_hint");
+        var resultCc = document.getElementById("result_cc");
+        var resultLiter = document.getElementById("result_liter");
+        var soakTime = document.getElementById("soak_time");
+        var rinseCount = document.getElementById("rinse_count");
+        var residualRisk = document.getElementById("residual_risk");
+        var btnCalc = document.getElementById("btn_calc");
+
+        if (!btnCalc) return;
+
+        function trimTrailing(s) {
+            return s.replace(/0+$/, "").replace(/\.$/, "");
+        }
+
+        function updatePpm() {
+            var pct = parseFloat(bleachPct.value);
+            if (!isNaN(pct)) {
+                ppmHint.textContent = "(" + (pct * 10000).toLocaleString() + " ppm)";
+            } else {
+                ppmHint.textContent = "(ppm)";
+            }
+        }
+
+        function calculate() {
+            try {
+                var bleachPercent = parseFloat(bleachPct.value);
+                var targetPpmVal = parseFloat(targetPpm.value);
+                var tankVol = parseFloat(tankLiter.value);
+
+                if (isNaN(bleachPercent) || isNaN(targetPpmVal) || isNaN(tankVol)) {
+                    resultCc.value = "請輸入有效數字";
+                    resultLiter.value = "請輸入有效數字";
+                    dilution.value = "—";
+                    soakTime.textContent = "—";
+                    rinseCount.textContent = "—";
+                    residualRisk.textContent = "—";
+                    return;
+                }
+
+                var bleachPpm = bleachPercent * 10000;
+                if (targetPpmVal === 0) {
+                    resultCc.value = "錯誤：濃度不能為0";
+                    resultLiter.value = "錯誤：濃度不能為0";
+                    dilution.value = "—";
+                    soakTime.textContent = "—";
+                    rinseCount.textContent = "—";
+                    residualRisk.textContent = "—";
+                    return;
+                }
+
+                var dil = bleachPpm / targetPpmVal;
+                dilution.value = Math.round(dil).toLocaleString();
+
+                var bleachLiter = (targetPpmVal * tankVol) / bleachPpm;
+                var bleachCc = bleachLiter * 1000;
+
+                resultLiter.value = (Math.round(bleachLiter * 1000) / 1000).toFixed(3);
+                resultCc.value = trimTrailing(bleachCc.toFixed(2));
+
+                if (targetPpmVal > 200) {
+                    soakTime.textContent = "10 - 15 分鐘";
+                    rinseCount.textContent = "5 次以上";
+                    residualRisk.textContent = "高（需精密檢測）";
+                } else if (targetPpmVal >= 100) {
+                    soakTime.textContent = "20 - 30 分鐘";
+                    rinseCount.textContent = "5 次";
+                    residualRisk.textContent = "中";
+                } else if (targetPpmVal >= 20) {
+                    soakTime.textContent = "30 - 60 分鐘";
+                    rinseCount.textContent = "3 - 4 次";
+                    residualRisk.textContent = "低";
+                } else {
+                    soakTime.textContent = "30 - 60 分鐘";
+                    rinseCount.textContent = "3 次";
+                    residualRisk.textContent = "低";
+                }
+            } catch (e) {
+                resultCc.value = "請輸入有效數字";
+                resultLiter.value = "請輸入有效數字";
+                dilution.value = "—";
+                soakTime.textContent = "—";
+                rinseCount.textContent = "—";
+                residualRisk.textContent = "—";
+            }
+        }
+
+        function onInput() {
+            updatePpm();
+            calculate();
+        }
+
+        bleachPct.addEventListener("input", onInput);
+        bleachPct.addEventListener("change", onInput);
+        targetPpm.addEventListener("input", onInput);
+        targetPpm.addEventListener("change", onInput);
+        tankLiter.addEventListener("input", onInput);
+        tankLiter.addEventListener("change", onInput);
+        btnCalc.addEventListener("click", function () {
+            updatePpm();
+            calculate();
+        });
+
+        updatePpm();
+        calculate();
+    })();
 </script>
 
 </body>
