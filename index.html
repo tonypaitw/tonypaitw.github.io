@@ -3,107 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tony Pai 的工具箱</title>
+    <title>Tony Pai 工程工具箱</title>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --accent-color: #3498db;
-            --bg-color: #f4f7f6;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --bg: #f8f9fa;
         }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); margin: 0; padding: 20px; }
-        .header { text-align: center; padding: 20px 0; color: var(--primary-color); }
+        body { font-family: sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; }
         
-        /* 網格佈局：手機 1 欄，電腦 3 欄 */
-        .grid-container {
+        /* 網格佈局 */
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            max-width: 1000px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+            max-width: 800px;
             margin: auto;
         }
 
-        .card {
+        /* 方框樣式 */
+        .tool-card {
             background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
+            aspect-ratio: 1 / 1; /* 正方形 */
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: 0.2s;
+            text-decoration: none;
+            color: var(--primary);
+            border: 1px solid #eee;
         }
-        .card:hover { transform: translateY(-5px); }
-        .card h3 { margin-top: 0; color: var(--accent-color); border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        
-        /* 計算器內部樣式 */
-        input { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background-color: var(--accent-color); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #2980b9; }
-        .result { margin-top: 15px; padding: 10px; background: #e8f4fd; border-radius: 4px; font-size: 0.9em; color: #2c3e50; line-height: 1.5; }
-        
-        .placeholder { color: #999; font-style: italic; text-align: center; padding-top: 40px; }
+        .tool-card:hover { transform: scale(1.05); border-color: var(--accent); }
+        .icon { font-size: 40px; margin-bottom: 10px; }
+        .title { font-weight: bold; font-size: 14px; text-align: center; padding: 0 10px; }
+
+        /* 隱藏的功能區塊 */
+        #calculator-page {
+            display: none;
+            max-width: 500px;
+            margin: 20px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .back-btn { background: #eee; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; margin-bottom: 15px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .calc-btn { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; background: #e8f4fd; border-radius: 8px; border-left: 5px solid var(--accent); }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <h1>Tony Pai 工具箱</h1>
-    <p>專業維修與自動化計算工具集</p>
+<div id="home-page">
+    <div class="header">
+        <h1>Tony Pai 工具箱</h1>
+        <p>維修工程師專用手冊</p>
+    </div>
+
+    <div class="grid">
+        <div class="tool-card" onclick="showTool('calculator-page')">
+            <div class="icon">🧪</div>
+            <div class="title">消毒濃度計算</div>
+        </div>
+
+        <div class="tool-card">
+            <div class="icon">💧</div>
+            <div class="title">RO 壓力計算</div>
+        </div>
+
+        <div class="tool-card">
+            <div class="icon">🤖</div>
+            <div class="title">Arduino 控制</div>
+        </div>
+
+        <div class="tool-card">
+            <div class="icon">📦</div>
+            <div class="title">零件規格</div>
+        </div>
+
+        <div class="tool-card">
+            <div class="icon">🛠️</div>
+            <div class="title">SOP 指南</div>
+        </div>
+
+        <div class="tool-card">
+            <div class="icon">⚙️</div>
+            <div class="title">系統設定</div>
+        </div>
+    </div>
 </div>
 
-<div class="grid-container">
-    <div class="card">
-        <h3>1. 消毒濃度計算</h3>
-        <label>原始濃度 (%)：</label>
-        <input type="number" id="origin" value="6" step="0.1">
-        <label>目標濃度 (ppm)：</label>
-        <input type="number" id="target" value="500">
-        <label>總水量 (公升)：</label>
-        <input type="number" id="water" value="10">
-        <button onclick="calcBleach()">立即計算</button>
-        <div id="output" class="result" style="display:none;"></div>
-    </div>
+<div id="calculator-page">
+    <button class="back-btn" onclick="showHome()">← 返回工具箱</button>
+    <h2>🧪 消毒濃度計算</h2>
+    <hr>
+    <label>原始漂白水濃度 (%)：</label>
+    <input type="number" id="origin" value="6">
+    <label>目標稀釋濃度 (ppm)：</label>
+    <input type="number" id="target" value="500">
+    <label>欲配製水量 (L)：</label>
+    <input type="number" id="water" value="10">
+    <button class="calc-btn" onclick="runCalc()">開始計算</button>
 
-    <div class="card">
-        <h3>2. RO 系統壓力計算</h3>
-        <div class="placeholder">待開發：計算逆滲透膜所需壓力</div>
-    </div>
-
-    <div class="card">
-        <h3>3. Arduino 電阻計算</h3>
-        <div class="placeholder">待開發：色碼電阻與分壓計算</div>
-    </div>
-
-    <div class="card">
-        <h3>4. 維修備忘錄</h3>
-        <div class="placeholder">待開發：常用備件規格表</div>
-    </div>
-
-    <div class="card">
-        <h3>5. 單位換算器</h3>
-        <div class="placeholder">待開發：壓力、流量單位轉換</div>
-    </div>
-
-    <div class="card">
-        <h3>6. 故障排除清單</h3>
-        <div class="placeholder">待開發：標準操作程序 (SOP)</div>
-    </div>
+    <div id="res-box" class="result" style="display:none;"></div>
 </div>
 
 <script>
-    function calcBleach() {
-        const originPct = document.getElementById('origin').value;
-        const targetPpm = document.getElementById('target').value;
-        const waterL = document.getElementById('water').value;
+    // 切換顯示功能頁
+    function showTool(id) {
+        document.getElementById('home-page').style.display = 'none';
+        document.getElementById(id).style.display = 'block';
+    }
+
+    // 返回首頁
+    function showHome() {
+        document.getElementById('home-page').style.display = 'block';
+        document.getElementById('calculator-page').style.display = 'none';
+    }
+
+    // 漂白水計算邏輯
+    function runCalc() {
+        const o = document.getElementById('origin').value;
+        const t = document.getElementById('target').value;
+        const w = document.getElementById('water').value;
+        const ml = (t * w) / (o * 10);
         
-        // 公式：(目標ppm * 水量L) / (原始濃度% * 10)
-        const bleachMl = (targetPpm * waterL) / (originPct * 10);
-        
-        const output = document.getElementById('output');
-        output.style.display = 'block';
-        output.innerHTML = `
-            <strong>計算結果：</strong><br>
-            • 需加入漂白水：<strong>${bleachMl.toFixed(1)}</strong> ml<br>
-            • 加入清水至：<strong>${waterL}</strong> 公升<br>
-            <small>*適用於一般環境消毒配製</small>
-        `;
+        const box = document.getElementById('res-box');
+        box.style.display = 'block';
+        box.innerHTML = `需加入漂白水：<strong>${ml.toFixed(1)} ml</strong><br>加入清水至：<strong>${w} 公升</strong>`;
     }
 </script>
 
