@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LDPE 軟管管線壓損評估 | Tony Pai 工具箱</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f0f0f0;
+      --input-border: #2563eb;
+      --panel-bg: #fff;
+      --result-head: #e0e0e0;
+      --btn: #2563eb;
+      --tip: #6b7280;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: #1f2937;
+      margin: 0;
+      padding: 16px;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+      min-height: 100vh;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 16px;
+      padding: 8px 14px;
+      background: #e5e7eb;
+      border-radius: 6px;
+      color: #374151;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .back-link:hover { background: #d1d5db; }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0 0 16px;
+      text-align: center;
+    }
+    .panel {
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: var(--panel-bg);
+    }
+    .panel-title {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+    .field {
+      margin-bottom: 12px;
+    }
+    .field:last-of-type { margin-bottom: 0; }
+    .field label {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+      color: #4b5563;
+    }
+    .field input {
+      width: 100%;
+      max-width: 200px;
+      padding: 10px 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      border: 2px solid var(--input-border);
+      border-radius: 6px;
+    }
+    .btn-calc {
+      display: block;
+      width: 100%;
+      max-width: 240px;
+      margin: 14px auto;
+      padding: 14px 24px;
+      font-family: inherit;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--btn);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-calc:hover { background: #1d4ed8; }
+    .result-panel { overflow-x: auto; }
+    .result-table {
+      width: 100%;
+      min-width: 420px;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .result-table th {
+      background: var(--result-head);
+      padding: 10px 8px;
+      text-align: center;
+      font-weight: 700;
+      border: 1px solid #d1d5db;
+    }
+    .result-table td {
+      padding: 10px 8px;
+      text-align: center;
+      border: 1px solid #e5e7eb;
+    }
+    .result-table tr:nth-child(even) { background: #f9fafb; }
+    .tip {
+      font-size: 0.85rem;
+      color: var(--tip);
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 返回工具箱</a>
+  <h1>LDPE 軟管管線壓損評估</h1>
+
+  <section class="panel">
+    <div class="panel-title">輸入參數</div>
+    <div class="field">
+      <label for="flow">Pump 輸出流量 (L/min)</label>
+      <input type="text" id="flow" value="2.2" inputmode="decimal">
+    </div>
+    <div class="field">
+      <label for="length">管路總長度 (m)</label>
+      <input type="text" id="length" value="15.0" inputmode="decimal">
+    </div>
+    <button type="button" class="btn-calc" id="btn_calc">計 算 壓 損</button>
+  </section>
+
+  <section class="panel result-panel">
+    <div class="panel-title">計算結果</div>
+    <table class="result-table">
+      <thead>
+        <tr>
+          <th>管徑規格</th>
+          <th>內徑<br>(mm)</th>
+          <th>流速<br>(m/s)</th>
+          <th>壓損<br>(psi)</th>
+          <th>壓損<br>(bar)</th>
+          <th>壓損狀態評估</th>
+        </tr>
+      </thead>
+      <tbody id="result_body"></tbody>
+    </table>
+  </section>
+
+  <p class="tip">
+    目標流速建議 ≥1.5 m/s ，有利沖刷抑菌。<br>
+    流速愈高壓損愈大，等效長度請納入彎頭/閥門。
+  </p>
+
+  <script>
+    (function () {
+      // 管徑規格與內徑 (mm) — 與 pipe_loss.py 一致
+      var PIPE_SPECS = [
+        ["1/4\"", 4.30],
+        ["5/16\"", 5.50],
+        ["3/8\"", 6.30],
+        ["1/2\"", 9.50]
+      ];
+
+      var F = 0.030;           // Darcy-Weisbach 摩擦係數
+      var G = 9.81;            // m/s²
+      var RHO = 1000;          // kg/m³
+      var BAR_TO_PSI = 14.5038;
+      var M_TO_BAR = RHO * G / 1e5;
+
+      function parseFloatLocal(s, def) {
+        if (s == null || s === "") return def;
+        var n = parseFloat(String(s).trim().replace(",", "."));
+        return isNaN(n) ? def : n;
+      }
+
+      function velocityMS(flowLmin, innerDiaMm) {
+        if (innerDiaMm <= 0) return 0;
+        var qM3s = flowLmin / 60 / 1000;
+        var dM = innerDiaMm / 1000;
+        var areaM2 = Math.PI * Math.pow(dM / 2, 2);
+        return areaM2 > 0 ? qM3s / areaM2 : 0;
+      }
+
+      function pressureLossBar(flowLmin, lengthM, innerDiaMm) {
+        if (innerDiaMm <= 0 || lengthM <= 0) return 0;
+        var v = velocityMS(flowLmin, innerDiaMm);
+        var dM = innerDiaMm / 1000;
+        var hM = F * (lengthM / dM) * (v * v) / (2 * G);
+        return hM * M_TO_BAR;
+      }
+
+      function pressureLossPsi(bar) {
+        return bar * BAR_TO_PSI;
+      }
+
+      function statusLabel(bar) {
+        if (bar >= 2.0) return "壓損極高(負載重)";
+        if (bar >= 0.5) return "壓損中等";
+        return "壓損理想";
+      }
+
+      function evaluateAll(flowLmin, lengthM) {
+        var results = [];
+        for (var i = 0; i < PIPE_SPECS.length; i++) {
+          var label = PIPE_SPECS[i][0];
+          var diaMm = PIPE_SPECS[i][1];
+          var vM = velocityMS(flowLmin, diaMm);
+          var pBar = pressureLossBar(flowLmin, lengthM, diaMm);
+          var pPsi = pressureLossPsi(pBar);
+          results.push({
+            spec: label,
+            inner_dia_mm: diaMm,
+            velocity_m_s: vM,
+            pressure_psi: pPsi,
+            pressure_bar: pBar,
+            status: statusLabel(pBar)
+          });
+        }
+        return results;
+      }
+
+      function renderResults(results) {
+        var tbody = document.getElementById("result_body");
+        tbody.innerHTML = "";
+        for (var i = 0; i < results.length; i++) {
+          var r = results[i];
+          var tr = document.createElement("tr");
+          tr.innerHTML =
+            "<td>" + r.spec + "</td>" +
+            "<td>" + r.inner_dia_mm.toFixed(2) + "</td>" +
+            "<td>" + r.velocity_m_s.toFixed(2) + "</td>" +
+            "<td>" + r.pressure_psi.toFixed(2) + "</td>" +
+            "<td>" + r.pressure_bar.toFixed(2) + "</td>" +
+            "<td>" + r.status + "</td>";
+          tbody.appendChild(tr);
+        }
+      }
+
+      function doCalc() {
+        var flow = parseFloatLocal(document.getElementById("flow").value, 2.2);
+        var length = parseFloatLocal(document.getElementById("length").value, 15.0);
+        if (flow <= 0 || length <= 0) {
+          alert("請輸入大於 0 的流量與管線長度。");
+          return;
+        }
+        var results = evaluateAll(flow, length);
+        renderResults(results);
+      }
+
+      document.getElementById("btn_calc").addEventListener("click", doCalc);
+      document.getElementById("flow").addEventListener("change", doCalc);
+      document.getElementById("length").addEventListener("change", doCalc);
+
+      doCalc();
+    })();
+  </script>
+</body>
+</html>
