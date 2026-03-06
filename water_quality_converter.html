@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>水質單位轉換器 | Tony Pai 工具箱</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #e8f4f8;
+      --input-border: #0d47a1;
+      --input-bg: #fff;
+      --result-bg: #fff8e1;
+      --result-fg: #e65100;
+      --btn: #1565c0;
+      --btn-hover: #0d47a1;
+      --tab-active: #1565c0;
+      --tab-inactive: #90a4ae;
+    }
+    * { box-sizing: border-box; }
+    html {
+      font-size: 16px;
+      -webkit-text-size-adjust: 100%;
+    }
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: #1a237e;
+      margin: 0;
+      padding: 12px;
+      padding-left: max(12px, env(safe-area-inset-left));
+      padding-right: max(12px, env(safe-area-inset-right));
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-tap-highlight-color: transparent;
+      /* 手機上避免內容被裁切，允許橫向捲動時仍可讀 */
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+    .wrap {
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    h1 {
+      font-size: clamp(1.1rem, 4.5vw, 1.35rem);
+      font-weight: 700;
+      margin: 0 0 8px;
+      text-align: center;
+      word-break: break-word;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: clamp(0.8rem, 3.5vw, 0.9rem);
+      color: #546e7a;
+      margin: 0 0 16px;
+    }
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .tab {
+      flex: 1;
+      padding: clamp(10px, 3vw, 14px) 6px;
+      text-align: center;
+      font-size: clamp(0.85rem, 3.5vw, 0.95rem);
+      font-weight: 700;
+      border: none;
+      background: var(--tab-inactive);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+      min-height: 44px;
+    }
+    .tab:hover { background: #78909c; }
+    .tab.active { background: var(--tab-active); }
+    .panel {
+      display: none;
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      padding: clamp(12px, 3.5vw, 16px);
+      margin-bottom: 14px;
+      background: #fff;
+    }
+    .panel.active { display: block; }
+    .panel .title {
+      color: var(--input-border);
+      font-weight: 700;
+      font-size: clamp(0.9rem, 3.5vw, 0.95rem);
+      margin-bottom: 12px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      margin-bottom: 12px;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .label {
+      min-width: 0;
+      width: 100%;
+      font-size: clamp(0.9rem, 3.5vw, 0.95rem);
+    }
+    @media (min-width: 360px) {
+      .label { width: auto; min-width: 10em; }
+    }
+    input[type="number"], input[type="text"] {
+      font-family: inherit;
+      font-size: clamp(1rem, 4vw, 1.1rem);
+      padding: 12px 14px;
+      border: 2px solid var(--input-border);
+      border-radius: 6px;
+      width: 100%;
+      max-width: 160px;
+      min-height: 44px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--btn);
+      box-shadow: 0 0 0 2px rgba(21,101,192,0.2);
+    }
+    .btn-calc {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      font-family: inherit;
+      font-size: clamp(1rem, 4vw, 1.1rem);
+      font-weight: 700;
+      color: #fff;
+      background: var(--btn);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+      min-height: 48px;
+    }
+    .btn-calc:hover { background: var(--btn-hover); }
+    .btn-calc:active { transform: scale(0.98); }
+    .result-box {
+      display: none;
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--result-bg);
+      border: 2px solid #ffb74d;
+    }
+    .result-box.show { display: block; }
+    .result-box h3 {
+      margin: 0 0 8px;
+      font-size: clamp(0.95rem, 3.5vw, 1rem);
+      color: var(--result-fg);
+    }
+    .result-line {
+      font-size: clamp(0.95rem, 3.5vw, 1rem);
+      margin-bottom: 4px;
+    }
+    .result-line strong { font-size: 1.25rem; color: #e65100; }
+    .error-msg {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #ffebee;
+      color: #c62828;
+      border-radius: 6px;
+      font-size: clamp(0.85rem, 3.5vw, 0.9rem);
+    }
+    .error-msg.show { display: block; }
+    .section-tds {
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      padding: clamp(12px, 3.5vw, 16px);
+      margin-bottom: 14px;
+      background: #fff;
+    }
+    .section-tds .title {
+      color: var(--input-border);
+      font-weight: 700;
+      font-size: clamp(0.9rem, 3.5vw, 0.95rem);
+      margin-bottom: 12px;
+    }
+    .radio-group {
+      margin: 8px 0 12px;
+    }
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      font-size: clamp(0.9rem, 3.5vw, 0.95rem);
+      cursor: pointer;
+    }
+    .radio-group input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--btn);
+    }
+    footer {
+      text-align: center;
+      font-size: clamp(0.75rem, 3vw, 0.8rem);
+      color: #546e7a;
+      margin-top: 16px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 8px 14px;
+      background: #eee;
+      border-radius: 6px;
+      color: #2c3e50;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .back-link:hover { background: #e0e0e0; }
+    .wrap .back-link { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a href="index.html" class="back-link">← 返回工具箱</a>
+    <h1>水質單位轉換器</h1>
+    <p class="subtitle">By Tony.Pai</p>
+
+    <div class="tabs">
+      <button type="button" class="tab active" data-tab="resist">電阻率 → 電導率</button>
+      <button type="button" class="tab" data-tab="conduct">電導率 → 電阻率</button>
+    </div>
+
+    <!-- 電阻率 → 電導率 -->
+    <div id="panel-resist" class="panel active">
+      <div class="title">電阻率 (MΩ·cm) 轉 電導率 (μS/cm)</div>
+      <div class="row">
+        <span class="label">電阻率 (MΩ·cm)</span>
+        <input type="number" id="mohm" placeholder="例如 18" step="any" min="0.0001" inputmode="decimal" />
+      </div>
+      <button type="button" class="btn-calc" id="btn-resist">轉換</button>
+      <div id="result-resist" class="result-box">
+        <h3>轉換結果</h3>
+        <div class="result-line">電導率：<strong id="out-uscm">—</strong> μS/cm</div>
+      </div>
+      <div id="err-resist" class="error-msg"></div>
+    </div>
+
+    <!-- 電導率 → 電阻率 -->
+    <div id="panel-conduct" class="panel">
+      <div class="title">電導率 (μS/cm) 轉 電阻率 (MΩ·cm)</div>
+      <div class="row">
+        <span class="label">電導率 (μS/cm)</span>
+        <input type="number" id="uscm" placeholder="例如 0.0556" step="any" min="0.0001" inputmode="decimal" />
+      </div>
+      <button type="button" class="btn-calc" id="btn-conduct">轉換</button>
+      <div id="result-conduct" class="result-box">
+        <h3>轉換結果</h3>
+        <div class="result-line">電阻率：<strong id="out-mohm">—</strong> MΩ·cm</div>
+      </div>
+      <div id="err-conduct" class="error-msg"></div>
+    </div>
+
+    <!-- TDS 轉 電導率（非線性關係） -->
+    <section class="section-tds">
+      <div class="title">TDS 轉 電導率（非線性關係）</div>
+      <div class="row">
+        <span class="label">TDS (ppm)</span>
+        <input type="number" id="tds" placeholder="例如 300" step="any" min="0.0001" inputmode="decimal" />
+      </div>
+      <div class="title" style="margin-top:12px; margin-bottom:6px;">水質模式</div>
+      <div class="radio-group">
+        <label><input type="radio" name="tds_mode" value="0.64" checked /> 自來水（係數 0.64，約 100–600 μS/cm）</label>
+        <label><input type="radio" name="tds_mode" value="0.50" /> RO 水（係數 0.50，純水/NaCl）</label>
+      </div>
+      <button type="button" class="btn-calc" id="btn-tds">轉換</button>
+      <div id="result-tds" class="result-box">
+        <h3>轉換結果</h3>
+        <div class="result-line">電導率：<strong id="out-tds">—</strong></div>
+      </div>
+      <div id="err-tds" class="error-msg"></div>
+    </section>
+
+    <footer>資料僅在本地計算，不上傳</footer>
+  </div>
+
+  <script>
+    (function () {
+      // 切換分頁
+      document.querySelectorAll(".tab").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var tab = this.getAttribute("data-tab");
+          document.querySelectorAll(".tab").forEach(function (b) { b.classList.remove("active"); });
+          document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
+          this.classList.add("active");
+          document.getElementById("panel-" + tab).classList.add("active");
+        });
+      });
+
+      function showError(panelId, errId, resultId, msg) {
+        var panel = document.getElementById(panelId);
+        panel.querySelector("#" + errId).textContent = msg;
+        panel.querySelector("#" + errId).classList.add("show");
+        panel.querySelector("#" + resultId).classList.remove("show");
+      }
+
+      function showResultResist() {
+        var val = parseFloat(document.getElementById("mohm").value);
+        if (isNaN(val)) {
+          showError("panel-resist", "err-resist", "result-resist", "請輸入正確的數字。");
+          return;
+        }
+        if (val <= 0) {
+          showError("panel-resist", "err-resist", "result-resist", "數值必須大於 0");
+          return;
+        }
+        var us = 1 / val;
+        document.getElementById("err-resist").classList.remove("show");
+        document.getElementById("err-resist").textContent = "";
+        document.getElementById("result-resist").classList.add("show");
+        document.getElementById("out-uscm").textContent = us.toFixed(4);
+      }
+
+      function showResultConduct() {
+        var val = parseFloat(document.getElementById("uscm").value);
+        if (isNaN(val)) {
+          showError("panel-conduct", "err-conduct", "result-conduct", "請輸入正確的數字。");
+          return;
+        }
+        if (val <= 0) {
+          showError("panel-conduct", "err-conduct", "result-conduct", "數值必須大於 0");
+          return;
+        }
+        var mohm = 1 / val;
+        document.getElementById("err-conduct").classList.remove("show");
+        document.getElementById("err-conduct").textContent = "";
+        document.getElementById("result-conduct").classList.add("show");
+        document.getElementById("out-mohm").textContent = mohm.toFixed(4);
+      }
+
+      function getTdsFactor() {
+        var r = document.querySelector('input[name="tds_mode"]:checked');
+        return r ? parseFloat(r.value) : 0.64;
+      }
+
+      function showResultTds() {
+        var tdsVal = parseFloat(document.getElementById("tds").value);
+        if (isNaN(tdsVal)) {
+          document.getElementById("err-tds").textContent = "請輸入正確的數字。";
+          document.getElementById("err-tds").classList.add("show");
+          document.getElementById("result-tds").classList.remove("show");
+          return;
+        }
+        if (tdsVal <= 0) {
+          document.getElementById("err-tds").textContent = "TDS 數值必須大於 0";
+          document.getElementById("err-tds").classList.add("show");
+          document.getElementById("result-tds").classList.remove("show");
+          return;
+        }
+        var factor = getTdsFactor();
+        var modeName = factor === 0.64 ? "自來水" : "RO 水";
+        var conductivity = tdsVal / factor;
+        document.getElementById("err-tds").classList.remove("show");
+        document.getElementById("err-tds").textContent = "";
+        document.getElementById("result-tds").classList.add("show");
+        document.getElementById("out-tds").textContent = conductivity.toFixed(2) + " μS/cm（" + modeName + "，係數 " + factor + "）";
+      }
+
+      document.getElementById("btn-resist").addEventListener("click", showResultResist);
+      document.getElementById("btn-conduct").addEventListener("click", showResultConduct);
+      document.getElementById("btn-tds").addEventListener("click", showResultTds);
+    })();
+  </script>
+</body>
+</html>
