@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>SDI 濾膜阻塞計算器 | Tony Pai 工具箱</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #e8f4f8;
+      --input-border: #0d47a1;
+      --input-bg: #fff;
+      --result-bg: #fff8e1;
+      --result-fg: #e65100;
+      --good: #2e7d32;
+      --warn: #f9a825;
+      --bad: #c62828;
+      --btn: #1565c0;
+      --btn-hover: #0d47a1;
+      --tab-active: #1565c0;
+      --tab-inactive: #90a4ae;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      background: var(--bg);
+      color: #1a237e;
+      margin: 0;
+      padding: 12px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+    }
+    h1 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin: 0 0 12px;
+      text-align: center;
+    }
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 14px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .tab {
+      flex: 1;
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border: none;
+      background: var(--tab-inactive);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .tab:hover { background: #78909c; }
+    .tab.active {
+      background: var(--tab-active);
+    }
+    .panel {
+      display: none;
+      border: 2px solid var(--input-border);
+      border-radius: 8px;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: #fff;
+    }
+    .panel.active { display: block; }
+    .panel .title {
+      color: var(--input-border);
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-bottom: 10px;
+    }
+    .row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      margin-bottom: 10px;
+    }
+    .row:last-child { margin-bottom: 0; }
+    .label {
+      min-width: 10em;
+      font-size: 0.95rem;
+    }
+    input[type="text"], input[type="number"] {
+      font-family: inherit;
+      font-size: 1.1rem;
+      padding: 10px 12px;
+      border: 2px solid var(--input-border);
+      border-radius: 6px;
+      width: 100%;
+      max-width: 140px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--btn);
+      box-shadow: 0 0 0 2px rgba(21,101,192,0.2);
+    }
+    .hint {
+      font-size: 0.8rem;
+      color: #546e7a;
+      margin-top: 4px;
+      width: 100%;
+    }
+    .btn-calc {
+      display: block;
+      width: 100%;
+      margin-top: 16px;
+      padding: 14px;
+      font-family: inherit;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      background: var(--btn);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-calc:hover { background: var(--btn-hover); }
+    .btn-calc:active { transform: scale(0.98); }
+    .result-box {
+      display: none;
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--result-bg);
+      border: 2px solid #ffb74d;
+    }
+    .result-box.show { display: block; }
+    .result-box h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: var(--result-fg);
+    }
+    .result-line {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    .result-line strong { font-size: 1.25rem; color: #e65100; }
+    .diagnosis {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .diagnosis.good { background: #e8f5e9; color: var(--good); }
+    .diagnosis.warn { background: #fff8e1; color: #f57f17; }
+    .diagnosis.bad { background: #ffebee; color: var(--bad); }
+    .diagnosis.invalid { background: #ffebee; color: var(--bad); }
+    .error-msg {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      background: #ffebee;
+      color: var(--bad);
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .error-msg.show { display: block; }
+    .notes {
+      margin-top: 16px;
+      padding: 12px 14px;
+      background: #e3f2fd;
+      border: 1px solid #90caf9;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: #1565c0;
+    }
+    .notes-title {
+      margin: 0 0 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0d47a1;
+    }
+    .notes-list {
+      margin: 0;
+      padding-left: 1.2em;
+      line-height: 1.5;
+    }
+    .notes-list li { margin-bottom: 4px; }
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: #546e7a;
+      margin-top: 16px;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 8px 14px;
+      background: #eee;
+      border-radius: 6px;
+      color: #2c3e50;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .back-link:hover { background: #e0e0e0; }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="back-link">← 返回工具箱</a>
+  <h1>SDI / FI 濾膜阻塞計算器</h1>
+  <p style="text-align:center; font-size:0.85rem; color:#546e7a; margin:0 0 12px;">By Tony.Pai</p>
+
+  <div class="tabs">
+    <button type="button" class="tab active" data-tab="time">時間版</button>
+    <button type="button" class="tab" data-tab="flow">流量版</button>
+  </div>
+
+  <!-- 時間版 -->
+  <div id="panel-time" class="panel active">
+    <div class="title">依過濾 500ml 所需時間計算</div>
+    <div class="row">
+      <span class="label">初始 500ml 時間</span>
+      <input type="number" id="t0" placeholder="秒" step="0.1" min="0.1" inputmode="decimal" />
+    </div>
+    <div class="row">
+      <span class="label">15 分鐘後 500ml 時間</span>
+      <input type="number" id="t15" placeholder="秒" step="0.1" min="0.1" inputmode="decimal" />
+    </div>
+    <div class="row">
+      <span class="label">總測試時間</span>
+      <input type="number" id="T" placeholder="15" value="15" step="0.1" min="0.1" inputmode="decimal" />
+      <span>分鐘</span>
+    </div>
+    <button type="button" class="btn-calc" id="btn-time">計算 SDI</button>
+    <div id="result-time" class="result-box">
+      <h3>計算結果</h3>
+      <div class="result-line">濾膜堵塞百分比：<strong id="out-fouling">—</strong>%</div>
+      <div class="result-line">SDI 指數：<strong id="out-sdi-time">—</strong></div>
+      <div id="diag-time" class="diagnosis"></div>
+    </div>
+    <div id="err-time" class="error-msg"></div>
+  </div>
+
+  <!-- 流量版 -->
+  <div id="panel-flow" class="panel">
+    <div class="title">依相同時間內的水量計算（如皆為 1 分鐘）</div>
+    <div class="row">
+      <span class="label">第 1 分鐘水量</span>
+      <input type="number" id="q1" placeholder="ml 或 L" step="0.1" min="0.1" inputmode="decimal" />
+    </div>
+    <div class="row">
+      <span class="label">第 15 分鐘水量</span>
+      <input type="number" id="q15" placeholder="ml 或 L" step="0.1" min="0" inputmode="decimal" />
+    </div>
+    <div class="row">
+      <span class="label">總測試經過時間</span>
+      <input type="number" id="t_total" placeholder="15" value="15" step="0.1" min="0.1" inputmode="decimal" />
+      <span>分鐘</span>
+    </div>
+    <button type="button" class="btn-calc" id="btn-flow">計算 SDI</button>
+    <div id="result-flow" class="result-box">
+      <h3>計算結果</h3>
+      <div class="result-line">流量衰減百分比：<strong id="out-drop">—</strong>%</div>
+      <div class="result-line">SDI (FI) 指數：<strong id="out-sdi-flow">—</strong></div>
+      <div id="diag-flow" class="diagnosis"></div>
+    </div>
+    <div id="err-flow" class="error-msg"></div>
+  </div>
+
+  <section class="notes">
+    <h3 class="notes-title">備註</h3>
+    <ol class="notes-list">
+      <li>SDI 測試必須在 30 psi 的恆定壓力下進行。</li>
+      <li>堵塞率超過 75%，請改用 5 或 10 分鐘測試法！</li>
+      <li>濾膜有分正反面，亮面（或有格紋面）通常朝上。</li>
+      <li>放入濾膜鎖緊後，開始計時前必須先排除濾殼內的空氣。</li>
+    </ol>
+  </section>
+
+  <footer> 資料僅在本地計算，不上傳</footer>
+
+  <script>
+    (function () {
+      // 切換分頁
+      document.querySelectorAll(".tab").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+          var tab = this.getAttribute("data-tab");
+          document.querySelectorAll(".tab").forEach(function (b) { b.classList.remove("active"); });
+          document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
+          this.classList.add("active");
+          document.getElementById("panel-" + tab).classList.add("active");
+        });
+      });
+
+      function showResult(panelId, resultId, errId, ratio, sdi, isTime) {
+        var panel = document.getElementById(panelId);
+        var resultEl = panel.querySelector("#" + resultId);
+        var errEl = panel.querySelector("#" + errId);
+        errEl.classList.remove("show");
+        errEl.textContent = "";
+        resultEl.classList.add("show");
+
+        if (isTime) {
+          document.getElementById("out-fouling").textContent = ratio.toFixed(2);
+          document.getElementById("out-sdi-time").textContent = sdi.toFixed(2);
+          var diag = document.getElementById("diag-time");
+          diag.className = "diagnosis ";
+          if (sdi < 0) {
+            diag.classList.add("invalid");
+            diag.textContent = "不合理。可能原因：系統壓力不穩定／濾膜破損／操作錯誤。";
+          } else if (sdi < 3) {
+            diag.classList.add("good");
+            diag.textContent = "診斷結果：優秀（適合 RO 系統運轉）";
+          } else if (sdi < 5) {
+            diag.classList.add("warn");
+            diag.textContent = "診斷結果：警告（需注意前處理濾芯狀態）";
+          } else {
+            diag.classList.add("bad");
+            diag.textContent = "診斷結果：嚴重（必須改善前處理，否則 RO 膜會迅速阻塞）";
+          }
+        } else {
+          document.getElementById("out-drop").textContent = ratio.toFixed(2);
+          document.getElementById("out-sdi-flow").textContent = sdi.toFixed(2);
+          var diag = document.getElementById("diag-flow");
+          diag.className = "diagnosis ";
+          if (sdi < 0) {
+            diag.classList.add("invalid");
+            diag.textContent = "不合理。可能原因：系統壓力不穩定／濾膜破損／操作錯誤。";
+          } else if (sdi < 3) {
+            diag.classList.add("good");
+            diag.textContent = "狀態：優良（合格進水）";
+          } else if (sdi < 5) {
+            diag.classList.add("warn");
+            diag.textContent = "狀態：注意（濾芯可能需清洗或更換）";
+          } else {
+            diag.classList.add("bad");
+            diag.textContent = "狀態：不合格（嚴禁進入 RO 膜，會造成永久損傷）";
+          }
+        }
+      }
+
+      function showError(panelId, errId, msg) {
+        var panel = document.getElementById(panelId);
+        panel.querySelector("#" + errId).textContent = msg;
+        panel.querySelector("#" + errId).classList.add("show");
+        panel.querySelector("#" + (panelId === "panel-time" ? "result-time" : "result-flow")).classList.remove("show");
+      }
+
+      // 時間版計算
+      document.getElementById("btn-time").addEventListener("click", function () {
+        var t0 = parseFloat(document.getElementById("t0").value);
+        var t15 = parseFloat(document.getElementById("t15").value);
+        var T = parseFloat(document.getElementById("T").value) || 15;
+        if (isNaN(t0) || isNaN(t15) || isNaN(T)) {
+          showError("panel-time", "err-time", "請輸入正確的數字");
+          return;
+        }
+        if (t0 <= 0 || t15 <= 0) {
+          showError("panel-time", "err-time", "時間不能為 0");
+          return;
+        }
+        if (T <= 0) {
+          showError("panel-time", "err-time", "總測試時間須大於 0");
+          return;
+        }
+        var fouling_ratio = (1 - t0 / t15) * 100;
+        var sdi = fouling_ratio / T;
+        showResult("panel-time", "result-time", "err-time", fouling_ratio, sdi, true);
+      });
+
+      // 流量版計算
+      document.getElementById("btn-flow").addEventListener("click", function () {
+        var q1 = parseFloat(document.getElementById("q1").value);
+        var q15 = parseFloat(document.getElementById("q15").value);
+        var t_total = parseFloat(document.getElementById("t_total").value) || 15;
+        if (isNaN(q1) || isNaN(q15) || isNaN(t_total)) {
+          showError("panel-flow", "err-flow", "請輸入正確的數字");
+          return;
+        }
+        if (q1 <= 0) {
+          showError("panel-flow", "err-flow", "初始水量不能為 0");
+          return;
+        }
+        if (t_total <= 0) {
+          showError("panel-flow", "err-flow", "總測試時間須大於 0");
+          return;
+        }
+        var drop_ratio = (1 - q15 / q1) * 100;
+        var sdi = drop_ratio / t_total;
+        showResult("panel-flow", "result-flow", "err-flow", drop_ratio, sdi, false);
+      });
+    })();
+  </script>
+</body>
+</html>
